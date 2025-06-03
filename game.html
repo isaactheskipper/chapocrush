@@ -3,8 +3,6 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <link rel="icon" href="images/chapati-beans.jpg" type="image/jpg">
-
   <title>Comrade Crush Game</title>
   <style>
     body {
@@ -28,6 +26,8 @@
       gap: 4px;
       max-width: 400px;
       margin: auto;
+      user-select: none; /* prevent text selection */
+      touch-action: none; /* improve touch handling */
     }
     .candy {
       width: 100%;
@@ -36,6 +36,9 @@
       background-size: cover;
       background-position: center;
       cursor: grab;
+    }
+    .candy:active {
+      cursor: grabbing;
     }
   </style>
 </head>
@@ -60,7 +63,8 @@
 
     let candies = [];
     let score = 0;
-    let draggedId, replacedId;
+    let draggedId = null;
+    let replacedId = null;
     let gameStarted = false;
 
     function createBoard() {
@@ -78,13 +82,20 @@
 
     function dragEvents() {
       candies.forEach(candy => {
+        // Desktop mouse events
         candy.addEventListener('dragstart', dragStart);
         candy.addEventListener('dragover', e => e.preventDefault());
         candy.addEventListener('drop', dragDrop);
         candy.addEventListener('dragend', dragEnd);
+
+        // Touch events for mobile
+        candy.addEventListener('touchstart', touchStart, {passive: true});
+        candy.addEventListener('touchmove', touchMove, {passive: false});
+        candy.addEventListener('touchend', touchEnd);
       });
     }
 
+    // Desktop drag functions
     function dragStart(e) {
       draggedId = +e.target.getAttribute('data-id');
     }
@@ -94,16 +105,70 @@
     }
 
     function dragEnd() {
+      handleMove();
+    }
+
+    // Touch variables
+    let touchDragId = null;
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchCurrentId = null;
+
+    function touchStart(e) {
+      e.preventDefault();
+      const touch = e.touches[0];
+      touchStartX = touch.clientX;
+      touchStartY = touch.clientY;
+      touchDragId = +e.target.getAttribute('data-id');
+    }
+
+    function touchMove(e) {
+      e.preventDefault(); // Prevent scrolling
+      const touch = e.touches[0];
+      const dx = touch.clientX - touchStartX;
+      const dy = touch.clientY - touchStartY;
+
+      // Determine which candy we are moving over based on direction and distance
+      let targetId = null;
+      if (Math.abs(dx) > Math.abs(dy)) {
+        // Horizontal movement
+        if (dx > 30) targetId = touchDragId + 1; // move right
+        else if (dx < -30) targetId = touchDragId - 1; // move left
+      } else {
+        // Vertical movement
+        if (dy > 30) targetId = touchDragId + width; // move down
+        else if (dy < -30) targetId = touchDragId - width; // move up
+      }
+
+      if (targetId !== null && targetId >= 0 && targetId < width * width) {
+        touchCurrentId = targetId;
+      }
+    }
+
+    function touchEnd(e) {
+      e.preventDefault();
+      if (touchDragId !== null && touchCurrentId !== null) {
+        draggedId = touchDragId;
+        replacedId = touchCurrentId;
+        handleMove();
+      }
+      // reset touch vars
+      touchDragId = null;
+      touchCurrentId = null;
+    }
+
+    function handleMove() {
       const validMoves = [draggedId - 1, draggedId + 1, draggedId - width, draggedId + width];
       if (validMoves.includes(replacedId)) {
+        // Swap class names
         [candies[draggedId].className, candies[replacedId].className] =
           [candies[replacedId].className, candies[draggedId].className];
-
+        // Swap images
         [candies[draggedId].style.backgroundImage, candies[replacedId].style.backgroundImage] =
           [candies[replacedId].style.backgroundImage, candies[draggedId].style.backgroundImage];
 
         gameStarted = true;
-        gameLoop(); // start chain checking after drag
+        checkMatches();
       }
     }
 
@@ -117,7 +182,7 @@
         if (notValid.includes(i)) continue;
 
         let color = candies[i].classList[1];
-        if (color && row.every(idx => candies[idx] && candies[idx].classList[1] === color)) {
+        if (row.every(idx => candies[idx] && candies[idx].classList[1] === color)) {
           row.forEach(idx => {
             candies[idx].className = 'candy';
             candies[idx].style.backgroundImage = '';
@@ -131,7 +196,7 @@
       for (let i = 0; i < 40; i++) {
         const col = [i, i + width, i + width * 2];
         let color = candies[i].classList[1];
-        if (color && col.every(idx => candies[idx] && candies[idx].classList[1] === color)) {
+        if (col.every(idx => candies[idx] && candies[idx].classList[1] === color)) {
           col.forEach(idx => {
             candies[idx].className = 'candy';
             candies[idx].style.backgroundImage = '';
@@ -167,13 +232,12 @@
     function gameLoop() {
       if (checkMatches()) {
         moveCandiesDown();
-        setTimeout(gameLoop, 200); // recursive match-check after drop
       }
     }
 
     createBoard();
     dragEvents();
-    setTimeout(() => gameLoop(), 500); // start initial match clearing
+    setTimeout(() => setInterval(gameLoop, 200), 500);
   </script>
 </body>
 </html>
