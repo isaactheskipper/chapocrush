@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="icon" href="images/chapati-beans.jpg" type="image/jpg">
+
+  <title>Candy Crush Game</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      background: #f0f0f0;
+      margin: 0;
+      padding: 1rem;
+    }
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+    #score {
+      margin-bottom: 1rem;
+      font-size: 1.2rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 4px;
+      max-width: 400px;
+      margin: auto;
+    }
+    .candy {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      border-radius: 8px;
+      background-size: cover;
+      background-position: center;
+      cursor: grab;
+    }
+  </style>
+</head>
+<body>
+  <h1>Candy Crush</h1>
+  <div id="score">Score: 0</div>
+  <div class="grid" id="grid"></div>
+
+  <script>
+    const width = 8;
+    const grid = document.getElementById('grid');
+    const scoreDisplay = document.getElementById('score');
+    const colors = ['red', 'yellow', 'green', 'blue', 'purple', 'pink'];
+    const imageMap = {
+      red: 'images/ugalinyama.jpg',
+      yellow: 'images/ugalinyama.jpg',
+      green: 'images/ugaliomena.jpg',
+      blue: 'images/sukumawiki-photo.jpg',
+      purple: 'images/chapo-ndengu.jpg',
+      pink: 'images/mchele-beans.jpg'
+    };
+
+    let candies = [];
+    let score = 0;
+    let draggedId, replacedId;
+    let gameStarted = false;
+
+    function createBoard() {
+      for (let i = 0; i < width * width; i++) {
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        const candy = document.createElement('div');
+        candy.className = `candy ${color}`;
+        candy.style.backgroundImage = `url('${imageMap[color]}')`;
+        candy.setAttribute('draggable', true);
+        candy.setAttribute('data-id', i);
+        grid.appendChild(candy);
+        candies.push(candy);
+      }
+    }
+
+    function dragEvents() {
+      candies.forEach(candy => {
+        candy.addEventListener('dragstart', dragStart);
+        candy.addEventListener('dragover', e => e.preventDefault());
+        candy.addEventListener('drop', dragDrop);
+        candy.addEventListener('dragend', dragEnd);
+      });
+    }
+
+    function dragStart(e) {
+      draggedId = +e.target.getAttribute('data-id');
+    }
+
+    function dragDrop(e) {
+      replacedId = +e.target.getAttribute('data-id');
+    }
+
+    function dragEnd() {
+      const validMoves = [draggedId - 1, draggedId + 1, draggedId - width, draggedId + width];
+      if (validMoves.includes(replacedId)) {
+        [candies[draggedId].className, candies[replacedId].className] =
+          [candies[replacedId].className, candies[draggedId].className];
+
+        [candies[draggedId].style.backgroundImage, candies[replacedId].style.backgroundImage] =
+          [candies[replacedId].style.backgroundImage, candies[draggedId].style.backgroundImage];
+
+        gameStarted = true;
+        gameLoop(); // start chain checking after drag
+      }
+    }
+
+    function checkMatches() {
+      let changed = false;
+
+      // Rows of 3
+      for (let i = 0; i < 64; i++) {
+        const row = [i, i + 1, i + 2];
+        const notValid = [6,7,14,15,22,23,30,31,38,39,46,47,54,55,62,63];
+        if (notValid.includes(i)) continue;
+
+        let color = candies[i].classList[1];
+        if (color && row.every(idx => candies[idx] && candies[idx].classList[1] === color)) {
+          row.forEach(idx => {
+            candies[idx].className = 'candy';
+            candies[idx].style.backgroundImage = '';
+          });
+          if (gameStarted) score += 3;
+          changed = true;
+        }
+      }
+
+      // Columns of 3
+      for (let i = 0; i < 40; i++) {
+        const col = [i, i + width, i + width * 2];
+        let color = candies[i].classList[1];
+        if (color && col.every(idx => candies[idx] && candies[idx].classList[1] === color)) {
+          col.forEach(idx => {
+            candies[idx].className = 'candy';
+            candies[idx].style.backgroundImage = '';
+          });
+          if (gameStarted) score += 3;
+          changed = true;
+        }
+      }
+
+      scoreDisplay.textContent = `Score: ${score}`;
+      return changed;
+    }
+
+    function moveCandiesDown() {
+      for (let i = 55; i >= 0; i--) {
+        if (candies[i + width].classList.length === 1) {
+          candies[i + width].className = candies[i].className;
+          candies[i + width].style.backgroundImage = candies[i].style.backgroundImage;
+          candies[i].className = 'candy';
+          candies[i].style.backgroundImage = '';
+        }
+      }
+
+      for (let i = 0; i < 8; i++) {
+        if (candies[i].classList.length === 1) {
+          const color = colors[Math.floor(Math.random() * colors.length)];
+          candies[i].className = `candy ${color}`;
+          candies[i].style.backgroundImage = `url('${imageMap[color]}')`;
+        }
+      }
+    }
+
+    function gameLoop() {
+      if (checkMatches()) {
+        moveCandiesDown();
+        setTimeout(gameLoop, 200); // recursive match-check after drop
+      }
+    }
+
+    createBoard();
+    dragEvents();
+    setTimeout(() => gameLoop(), 500); // start initial match clearing
+  </script>
+</body>
+</html>
