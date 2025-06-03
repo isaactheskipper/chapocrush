@@ -1,75 +1,113 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Comrade Crush Game</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      text-align: center;
-      background: #f0f0f0;
-      margin: 0;
-      padding: 1rem;
-    }
-    h1 {
-      font-size: 2rem;
-      margin-bottom: 0.5rem;
-    }
-    #score {
-      margin-bottom: 1rem;
-      font-size: 1.2rem;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(8, 1fr);
-      gap: 4px;
-      max-width: 400px;
-      margin: auto;
-      user-select: none; /* prevent text selection */
-      touch-action: none; /* improve touch handling */
-    }
-    .candy {
-      width: 100%;
-      aspect-ratio: 1 / 1;
-      border-radius: 8px;
-      background-size: cover;
-      background-position: center;
-      cursor: grab;
-    }
-    .candy:active {
-      cursor: grabbing;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Candy Crush Game</title>
+<link rel="icon" href="images/icon.png" />
+<style>
+  body {
+    font-family: sans-serif;
+    text-align: center;
+    background: #f0f0f0;
+    margin: 0;
+    padding: 1rem;
+  }
+  h1 {
+    font-size: 2rem;
+  }
+  #score {
+    margin: 1rem;
+    font-size: 1.2rem;
+  }
+  #resetBtn {
+    margin-bottom: 1rem;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 4px;
+    max-width: 400px;
+    margin: auto;
+  }
+  .candy {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 8px;
+    background-size: cover;
+    background-position: center;
+    cursor: grab;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+  .popping {
+    transform: scale(0.1);
+    opacity: 0;
+  }
+</style>
 </head>
 <body>
   <h1>Candy Crush</h1>
   <div id="score">Score: 0</div>
+  <button id="resetBtn">Reset Score</button>
   <div class="grid" id="grid"></div>
 
   <script>
     const width = 8;
     const grid = document.getElementById('grid');
     const scoreDisplay = document.getElementById('score');
+    const resetBtn = document.getElementById('resetBtn');
+
     const colors = ['red', 'yellow', 'green', 'blue', 'purple', 'pink'];
     const imageMap = {
-      red: 'images/ugalinyama.jpg',
-      yellow: 'images/ugalinyama.jpg',
-      green: 'images/ugaliomena.jpg',
-      blue: 'images/sukumawiki-photo.jpg',
-      purple: 'images/chapo-ndengu.jpg',
-      pink: 'images/mchele-beans.jpg'
+      red: 'images/ugali.jpg',
+      yellow: 'images/omena.jpg',
+      green: 'images/mayai.jpg',
+      blue: 'images/ndengu.jpg',
+      purple: 'images/bean.jpg',
+      pink: 'images/chapati.jpg'
     };
 
     let candies = [];
-    let score = 0;
     let draggedId = null;
     let replacedId = null;
-    let gameStarted = false;
 
+    // Always start score at 0 on page load
+    const TEN_HOURS = 10 * 60 * 60 * 1000; // 10 hours in milliseconds
+const scoreKey = 'score';
+const timeKey = 'scoreTimestamp';
+
+function loadScore() {
+  const savedTime = localStorage.getItem(timeKey);
+  const now = Date.now();
+
+  if (!savedTime || now - savedTime > TEN_HOURS) {
+    // No timestamp or expired -> reset score
+    localStorage.setItem(scoreKey, 0);
+    localStorage.setItem(timeKey, now);
+    return 0;
+  } else {
+    // Load saved score
+    return parseInt(localStorage.getItem(scoreKey)) || 0;
+  }
+}
+
+function saveScore(newScore) {
+  localStorage.setItem(scoreKey, newScore);
+  localStorage.setItem(timeKey, Date.now());
+}
+
+// On page load
+let score = loadScore();
+scoreDisplay.textContent = `Score: ${score}`;
+
+
+
+    // Create the initial board with random candies
     function createBoard() {
-      for (let i = 0; i < width * width; i++) {
-        const color = colors[Math.floor(Math.random() * colors.length)];
+      for(let i = 0; i < width * width; i++) {
+        const color = randomColor();
         const candy = document.createElement('div');
         candy.className = `candy ${color}`;
         candy.style.backgroundImage = `url('${imageMap[color]}')`;
@@ -78,166 +116,207 @@
         grid.appendChild(candy);
         candies.push(candy);
       }
+      addDragEvents();
     }
 
-    function dragEvents() {
+    // Helper: get random color string
+    function randomColor() {
+      return colors[Math.floor(Math.random() * colors.length)];
+    }
+
+    // Add drag event listeners to candies
+    function addDragEvents() {
       candies.forEach(candy => {
-        // Desktop mouse events
         candy.addEventListener('dragstart', dragStart);
         candy.addEventListener('dragover', e => e.preventDefault());
         candy.addEventListener('drop', dragDrop);
         candy.addEventListener('dragend', dragEnd);
-
-        // Touch events for mobile
-        candy.addEventListener('touchstart', touchStart, {passive: true});
-        candy.addEventListener('touchmove', touchMove, {passive: false});
-        candy.addEventListener('touchend', touchEnd);
       });
     }
 
-    // Desktop drag functions
     function dragStart(e) {
-      draggedId = +e.target.getAttribute('data-id');
+      draggedId = parseInt(e.target.getAttribute('data-id'));
+      console.log('Drag Start:', draggedId);
     }
 
     function dragDrop(e) {
-      replacedId = +e.target.getAttribute('data-id');
+      replacedId = parseInt(e.target.getAttribute('data-id'));
+      console.log('Drag Drop:', replacedId);
     }
 
     function dragEnd() {
-      handleMove();
-    }
+      console.log(`Trying to swap ${draggedId} and ${replacedId}`);
 
-    // Touch variables
-    let touchDragId = null;
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let touchCurrentId = null;
-
-    function touchStart(e) {
-      e.preventDefault();
-      const touch = e.touches[0];
-      touchStartX = touch.clientX;
-      touchStartY = touch.clientY;
-      touchDragId = +e.target.getAttribute('data-id');
-    }
-
-    function touchMove(e) {
-      e.preventDefault(); // Prevent scrolling
-      const touch = e.touches[0];
-      const dx = touch.clientX - touchStartX;
-      const dy = touch.clientY - touchStartY;
-
-      // Determine which candy we are moving over based on direction and distance
-      let targetId = null;
-      if (Math.abs(dx) > Math.abs(dy)) {
-        // Horizontal movement
-        if (dx > 30) targetId = touchDragId + 1; // move right
-        else if (dx < -30) targetId = touchDragId - 1; // move left
-      } else {
-        // Vertical movement
-        if (dy > 30) targetId = touchDragId + width; // move down
-        else if (dy < -30) targetId = touchDragId - width; // move up
+      if (replacedId === null || draggedId === null) {
+        resetDrag();
+        return;
       }
 
-      if (targetId !== null && targetId >= 0 && targetId < width * width) {
-        touchCurrentId = targetId;
-      }
-    }
-
-    function touchEnd(e) {
-      e.preventDefault();
-      if (touchDragId !== null && touchCurrentId !== null) {
-        draggedId = touchDragId;
-        replacedId = touchCurrentId;
-        handleMove();
-      }
-      // reset touch vars
-      touchDragId = null;
-      touchCurrentId = null;
-    }
-
-    function handleMove() {
       const validMoves = [draggedId - 1, draggedId + 1, draggedId - width, draggedId + width];
       if (validMoves.includes(replacedId)) {
-        // Swap class names
-        [candies[draggedId].className, candies[replacedId].className] =
-          [candies[replacedId].className, candies[draggedId].className];
-        // Swap images
-        [candies[draggedId].style.backgroundImage, candies[replacedId].style.backgroundImage] =
-          [candies[replacedId].style.backgroundImage, candies[draggedId].style.backgroundImage];
-
-        gameStarted = true;
-        checkMatches();
+        swapCandies(draggedId, replacedId);
+        if (checkMatches()) {
+          console.log('Valid move');
+          applyGravity();
+          updateScoreDisplay();
+        } else {
+          console.log('Invalid move - reverting swap');
+          swapCandies(draggedId, replacedId); // revert swap
+        }
+      } else {
+        console.log('Invalid move - not adjacent');
       }
+      resetDrag();
     }
 
+    function resetDrag() {
+      draggedId = null;
+      replacedId = null;
+    }
+
+    // Swap candies visually and in the candies array
+    function swapCandies(id1, id2) {
+      const candy1 = candies[id1];
+      const candy2 = candies[id2];
+
+      // Swap classNames (color classes)
+      const tempClass = candy1.className;
+      candy1.className = candy2.className;
+      candy2.className = tempClass;
+
+      // Swap background images
+      const tempBg = candy1.style.backgroundImage;
+      candy1.style.backgroundImage = candy2.style.backgroundImage;
+      candy2.style.backgroundImage = tempBg;
+    }
+
+    // Check for any matches in rows or columns of length 3 or more
     function checkMatches() {
-      let changed = false;
+      let matched = false;
+      let matchesFound = [];
 
-      // Rows of 3
-      for (let i = 0; i < 64; i++) {
-        const row = [i, i + 1, i + 2];
-        const notValid = [6,7,14,15,22,23,30,31,38,39,46,47,54,55,62,63];
-        if (notValid.includes(i)) continue;
+      // Check rows for matches 3+
+      for (let i = 0; i < width * width; i++) {
+        const rowStart = i - (i % width);
+        const baseColor = candies[i].classList[1];
+        if (!baseColor) continue;
 
-        let color = candies[i].classList[1];
-        if (row.every(idx => candies[idx] && candies[idx].classList[1] === color)) {
-          row.forEach(idx => {
-            candies[idx].className = 'candy';
-            candies[idx].style.backgroundImage = '';
-          });
-          if (gameStarted) score += 3;
-          changed = true;
+        let matchLength = 1;
+        for (let j = i + 1; j < rowStart + width; j++) {
+          if (candies[j] && candies[j].classList[1] === baseColor) {
+            matchLength++;
+          } else {
+            break;
+          }
+        }
+        if (matchLength >= 3) {
+          matched = true;
+          for (let k = i; k < i + matchLength; k++) {
+            if (!matchesFound.includes(k)) matchesFound.push(k);
+          }
+          i += matchLength - 1;
         }
       }
 
-      // Columns of 3
-      for (let i = 0; i < 40; i++) {
-        const col = [i, i + width, i + width * 2];
-        let color = candies[i].classList[1];
-        if (col.every(idx => candies[idx] && candies[idx].classList[1] === color)) {
-          col.forEach(idx => {
-            candies[idx].className = 'candy';
-            candies[idx].style.backgroundImage = '';
-          });
-          if (gameStarted) score += 3;
-          changed = true;
+      // Check columns for matches 3+
+      for (let i = 0; i < width * (width - 2); i++) {
+        const baseColor = candies[i].classList[1];
+        if (!baseColor) continue;
+
+        let matchLength = 1;
+        for (let j = i + width; j < width * width; j += width) {
+          if (candies[j] && candies[j].classList[1] === baseColor) {
+            matchLength++;
+          } else {
+            break;
+          }
+        }
+        if (matchLength >= 3) {
+          matched = true;
+          for (let k = i; k < i + width * matchLength; k += width) {
+            if (!matchesFound.includes(k)) matchesFound.push(k);
+          }
         }
       }
 
-      scoreDisplay.textContent = `Score: ${score}`;
-      return changed;
+      if (matched) {
+        console.log('Matches found at indices:', matchesFound);
+        removeMatches(matchesFound);
+        return true;
+      }
+
+      return false;
     }
 
-    function moveCandiesDown() {
-      for (let i = 55; i >= 0; i--) {
-        if (candies[i + width].classList.length === 1) {
-          candies[i + width].className = candies[i].className;
-          candies[i + width].style.backgroundImage = candies[i].style.backgroundImage;
-          candies[i].className = 'candy';
-          candies[i].style.backgroundImage = '';
+    // Remove candies at given indices with animation
+    function removeMatches(indices) {
+      indices.forEach(i => {
+        const candy = candies[i];
+        candy.classList.add('popping');
+        setTimeout(() => {
+          candy.className = 'candy'; // remove color class
+          candy.style.backgroundImage = '';
+        }, 300);
+      });
+      updateScore(indices.length);
+    }
+
+    // Apply gravity: candies fall down into empty spaces, new candies generated at top
+    function applyGravity() {
+      for (let col = 0; col < width; col++) {
+        for (let row = width - 2; row >= 0; row--) {
+          let idx = row * width + col;
+          if (candies[idx].classList.length === 1) continue; // empty candy
+
+          let currentRow = row;
+          while (currentRow + 1 < width && candies[(currentRow + 1) * width + col].classList.length === 1) {
+            // Swap candy down
+            swapCandies(currentRow * width + col, (currentRow + 1) * width + col);
+            currentRow++;
+          }
         }
       }
 
-      for (let i = 0; i < 8; i++) {
+      // Fill empty top candies with new random candies
+      for (let i = 0; i < width; i++) {
         if (candies[i].classList.length === 1) {
-          const color = colors[Math.floor(Math.random() * colors.length)];
+          const color = randomColor();
           candies[i].className = `candy ${color}`;
           candies[i].style.backgroundImage = `url('${imageMap[color]}')`;
         }
       }
     }
 
+    // Update score and localStorage
+    function updateScore(points) {
+      score += points;
+      updateScoreDisplay();
+      localStorage.setItem('score', score);
+      console.log('Score updated:', score);
+    }
+
+    function updateScoreDisplay() {
+      scoreDisplay.textContent = `Score: ${score}`;
+    }
+
+    resetBtn.addEventListener('click', () => {
+      score = 0;
+      updateScoreDisplay();
+      localStorage.setItem('score', score);
+      console.log('Score reset');
+    });
+
+    // Game loop: keep checking matches and applying gravity every 300ms
     function gameLoop() {
       if (checkMatches()) {
-        moveCandiesDown();
+        applyGravity();
       }
     }
 
     createBoard();
-    dragEvents();
-    setTimeout(() => setInterval(gameLoop, 200), 500);
+
+    // Run the game loop every 300ms
+    setInterval(gameLoop, 300);
   </script>
 </body>
 </html>
