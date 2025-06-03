@@ -3,320 +3,612 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Candy Crush Game</title>
-<link rel="icon" href="images/icon.png" />
+<title>Kenyan Food Crush</title>
 <style>
-  body {
-    font-family: sans-serif;
-    text-align: center;
-    background: #f0f0f0;
-    margin: 0;
-    padding: 1rem;
+body {
+  font-family: 'Arial', sans-serif;
+  text-align: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  margin: 0;
+  padding: 1rem;
+  min-height: 100vh;
+  color: white;
+}
+
+.game-container {
+  max-width: 500px;
+  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 2rem;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+}
+
+h1 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+  background: linear-gradient(45deg, #ff6b6b, #feca57, #48dbfb);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.score-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 1rem;
+  border-radius: 15px;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.score-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+#score {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 0.25rem;
+}
+
+#highScore {
+  font-size: 1rem;
+  opacity: 0.8;
+  color: #feca57;
+}
+
+#resetBtn {
+  background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 25px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+#resetBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 6px;
+  max-width: 400px;
+  margin: auto;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 15px;
+  border-radius: 20px;
+  box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.1);
+} 
+
+.candy {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 12px;
+  cursor: grab;
+  transition: all 0.2s ease;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.candy:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+.candy:active {
+  cursor: grabbing;
+  transform: scale(0.95);
+}
+
+/* Fallback colors if images don't load */
+.ugali { background-color: #f39c12; }
+.omena { background-color: #3498db; }
+.mayai { background-color: #f1c40f; }
+.ndengu { background-color: #27ae60; }
+.bean { background-color: #8e44ad; }
+.chapati { background-color: #e74c3c; }
+
+.popping {
+  animation: pop 0.4s ease-out forwards;
+}
+
+@keyframes pop {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.8; }
+  100% { transform: scale(0); opacity: 0; }
+}
+
+.falling {
+  animation: fall 0.3s ease-in forwards;
+}
+
+@keyframes fall {
+  from { transform: translateY(-100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.match-feedback {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(46, 204, 113, 0.9);
+  color: white;
+  padding: 1rem 2rem;
+  border-radius: 25px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  z-index: 1000;
+  animation: fadeInOut 1s ease-out forwards;
+}
+
+.high-score-feedback {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(45deg, #feca57, #ff9ff3);
+  color: white;
+  padding: 1.5rem 2.5rem;
+  border-radius: 25px;
+  font-size: 1.4rem;
+  font-weight: bold;
+  z-index: 1000;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  animation: highScoreAnim 2s ease-out forwards;
+}
+
+@keyframes highScoreAnim {
+  0% { 
+    opacity: 0; 
+    transform: translate(-50%, -50%) scale(0.3) rotate(-10deg); 
   }
-  h1 {
-    font-size: 2rem;
+  30% { 
+    opacity: 1; 
+    transform: translate(-50%, -50%) scale(1.2) rotate(5deg); 
   }
-  #score {
-    margin: 1rem;
-    font-size: 1.2rem;
+  60% { 
+    transform: translate(-50%, -50%) scale(1) rotate(0deg); 
   }
-  #resetBtn {
-    margin-bottom: 1rem;
-    padding: 0.5rem 1rem;
-    cursor: pointer;
+  100% { 
+    opacity: 0; 
+    transform: translate(-50%, -50%) scale(0.8) rotate(0deg); 
   }
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(8, 1fr);
-    gap: 4px;
-    max-width: 400px;
-    margin: auto;
-  }
-  .candy {
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    border-radius: 8px;
-    background-size: cover;
-    background-position: center;
-    cursor: grab;
-    transition: transform 0.3s ease, opacity 0.3s ease;
-  }
-  .popping {
-    transform: scale(0.1);
-    opacity: 0;
-  }
+}
 </style>
 </head>
 <body>
-  <h1>Candy Crush</h1>
-  <div id="score">Score: 0</div>
-  <button id="resetBtn">Reset Score</button>
+<div class="game-container">
+  <h1>🇰🇪 Kenyan Food Crush</h1>
+  <div class="score-container">
+    <div class="score-info">
+      <div id="score">Score: 0</div>
+      <div id="highScore">High Score: 0</div>
+    </div>
+    <button id="resetBtn">Reset Game</button>
+  </div>
   <div class="grid" id="grid"></div>
+</div>
 
-  <script>
-    const width = 8;
-    const grid = document.getElementById('grid');
-    const scoreDisplay = document.getElementById('score');
-    const resetBtn = document.getElementById('resetBtn');
+<script>
+  const width = 8;
+  const grid = document.getElementById('grid');
+  const scoreDisplay = document.getElementById('score');
+  const highScoreDisplay = document.getElementById('highScore');
+  const resetBtn = document.getElementById('resetBtn');
 
-    const colors = ['red', 'yellow', 'green', 'blue', 'purple', 'pink'];
-    const imageMap = {
-      red: 'images/ugali.jpg',
-      yellow: 'images/omena.jpg',
-      green: 'images/mayai.jpg',
-      blue: 'images/ndengu.jpg',
-      purple: 'images/bean.jpg',
-      pink: 'images/chapati.jpg'
-    };
+  // Kenyan foods with their class names and image paths
+  const foods = ['ugali', 'omena', 'mayai', 'ndengu', 'bean', 'chapati'];
+  
+  // Image mapping - replace these URLs with your actual image paths
+  const imageMap = {
+    ugali: 'images/ugali.jpg',
+    omena: 'images/omena.jpg', 
+    mayai: 'images/mayai.jpg',
+    ndengu: 'images/ndengu.jpg',
+    bean: 'images/bean.jpg',
+    chapati: 'images/chapati.jpg'
+  };
+  
+  let candies = [];
+  let draggedId = null;
+  let replacedId = null;
+  let score = 0;
+  let isProcessing = false;
+  
+  // Score storage configuration
+  const SCORE_KEY = 'kenyanFoodCrushScore';
+  const HIGH_SCORE_KEY = 'kenyanFoodCrushHighScore';
+  const SCORE_TIMESTAMP_KEY = 'kenyanFoodCrushTimestamp';
+  const SCORE_EXPIRY_HOURS = 24; // Score expires after 24 hours
 
-    let candies = [];
-    let draggedId = null;
-    let replacedId = null;
-
-    // Always start score at 0 on page load
-    const TEN_HOURS = 10 * 60 * 60 * 1000; // 10 hours in milliseconds
-const scoreKey = 'score';
-const timeKey = 'scoreTimestamp';
-
-function loadScore() {
-  const savedTime = localStorage.getItem(timeKey);
-  const now = Date.now();
-
-  if (!savedTime || now - savedTime > TEN_HOURS) {
-    // No timestamp or expired -> reset score
-    localStorage.setItem(scoreKey, 0);
-    localStorage.setItem(timeKey, now);
-    return 0;
-  } else {
-    // Load saved score
-    return parseInt(localStorage.getItem(scoreKey)) || 0;
+  function getRandomFood() {
+    return foods[Math.floor(Math.random() * foods.length)];
   }
-}
 
-function saveScore(newScore) {
-  localStorage.setItem(scoreKey, newScore);
-  localStorage.setItem(timeKey, Date.now());
-}
-
-// On page load
-let score = loadScore();
-scoreDisplay.textContent = `Score: ${score}`;
-
-
-
-    // Create the initial board with random candies
-    function createBoard() {
-      for(let i = 0; i < width * width; i++) {
-        const color = randomColor();
-        const candy = document.createElement('div');
-        candy.className = `candy ${color}`;
-        candy.style.backgroundImage = `url('${imageMap[color]}')`;
-        candy.setAttribute('draggable', true);
-        candy.setAttribute('data-id', i);
-        grid.appendChild(candy);
-        candies.push(candy);
-      }
-      addDragEvents();
+  // Create the initial board
+  function createBoard() {
+    grid.innerHTML = '';
+    candies = [];
+    
+    for(let i = 0; i < width * width; i++) {
+      const food = getRandomFood();
+      const candy = document.createElement('div');
+      candy.className = `candy ${food}`;
+      candy.style.backgroundImage = `url('${imageMap[food]}')`;
+      candy.setAttribute('draggable', true);
+      candy.setAttribute('data-id', i);
+      grid.appendChild(candy);
+      candies.push(candy);
     }
-
-    // Helper: get random color string
-    function randomColor() {
-      return colors[Math.floor(Math.random() * colors.length)];
+    
+    // Ensure no initial matches
+    while(hasMatches()) {
+      regenerateBoard();
     }
+    
+    addDragEvents();
+  }
 
-    // Add drag event listeners to candies
-    function addDragEvents() {
-      candies.forEach(candy => {
-        candy.addEventListener('dragstart', dragStart);
-        candy.addEventListener('dragover', e => e.preventDefault());
-        candy.addEventListener('drop', dragDrop);
-        candy.addEventListener('dragend', dragEnd);
-      });
-    }
+  function regenerateBoard() {
+    candies.forEach((candy, index) => {
+      const food = getRandomFood();
+      candy.className = `candy ${food}`;
+      candy.style.backgroundImage = `url('${imageMap[food]}')`;
+    });
+  }
 
-    function dragStart(e) {
-      draggedId = parseInt(e.target.getAttribute('data-id'));
-      console.log('Drag Start:', draggedId);
-    }
-
-    function dragDrop(e) {
-      replacedId = parseInt(e.target.getAttribute('data-id'));
-      console.log('Drag Drop:', replacedId);
-    }
-
-    function dragEnd() {
-      console.log(`Trying to swap ${draggedId} and ${replacedId}`);
-
-      if (replacedId === null || draggedId === null) {
-        resetDrag();
-        return;
-      }
-
-      const validMoves = [draggedId - 1, draggedId + 1, draggedId - width, draggedId + width];
-      if (validMoves.includes(replacedId)) {
-        swapCandies(draggedId, replacedId);
-        if (checkMatches()) {
-          console.log('Valid move');
-          applyGravity();
-          updateScoreDisplay();
-        } else {
-          console.log('Invalid move - reverting swap');
-          swapCandies(draggedId, replacedId); // revert swap
-        }
-      } else {
-        console.log('Invalid move - not adjacent');
-      }
-      resetDrag();
-    }
-
-    function resetDrag() {
-      draggedId = null;
-      replacedId = null;
-    }
-
-    // Swap candies visually and in the candies array
-    function swapCandies(id1, id2) {
-      const candy1 = candies[id1];
-      const candy2 = candies[id2];
-
-      // Swap classNames (color classes)
-      const tempClass = candy1.className;
-      candy1.className = candy2.className;
-      candy2.className = tempClass;
-
-      // Swap background images
-      const tempBg = candy1.style.backgroundImage;
-      candy1.style.backgroundImage = candy2.style.backgroundImage;
-      candy2.style.backgroundImage = tempBg;
-    }
-
-    // Check for any matches in rows or columns of length 3 or more
-    function checkMatches() {
-      let matched = false;
-      let matchesFound = [];
-
-      // Check rows for matches 3+
-      for (let i = 0; i < width * width; i++) {
-        const rowStart = i - (i % width);
-        const baseColor = candies[i].classList[1];
-        if (!baseColor) continue;
-
-        let matchLength = 1;
-        for (let j = i + 1; j < rowStart + width; j++) {
-          if (candies[j] && candies[j].classList[1] === baseColor) {
-            matchLength++;
-          } else {
-            break;
-          }
-        }
-        if (matchLength >= 3) {
-          matched = true;
-          for (let k = i; k < i + matchLength; k++) {
-            if (!matchesFound.includes(k)) matchesFound.push(k);
-          }
-          i += matchLength - 1;
-        }
-      }
-
-      // Check columns for matches 3+
-      for (let i = 0; i < width * (width - 2); i++) {
-        const baseColor = candies[i].classList[1];
-        if (!baseColor) continue;
-
-        let matchLength = 1;
-        for (let j = i + width; j < width * width; j += width) {
-          if (candies[j] && candies[j].classList[1] === baseColor) {
-            matchLength++;
-          } else {
-            break;
-          }
-        }
-        if (matchLength >= 3) {
-          matched = true;
-          for (let k = i; k < i + width * matchLength; k += width) {
-            if (!matchesFound.includes(k)) matchesFound.push(k);
-          }
-        }
-      }
-
-      if (matched) {
-        console.log('Matches found at indices:', matchesFound);
-        removeMatches(matchesFound);
+  // Score storage functions
+  function saveToStorage(key, value) {
+    try {
+      // Try localStorage first
+      if (typeof Storage !== 'undefined' && localStorage) {
+        localStorage.setItem(key, value);
         return true;
       }
-
-      return false;
+    } catch (e) {
+      console.log('localStorage not available, using memory storage');
     }
-
-    // Remove candies at given indices with animation
-    function removeMatches(indices) {
-      indices.forEach(i => {
-        const candy = candies[i];
-        candy.classList.add('popping');
-        setTimeout(() => {
-          candy.className = 'candy'; // remove color class
-          candy.style.backgroundImage = '';
-        }, 300);
-      });
-      updateScore(indices.length);
+    
+    // Fallback to in-memory storage
+    if (!window.gameStorage) {
+      window.gameStorage = {};
     }
-
-    // Apply gravity: candies fall down into empty spaces, new candies generated at top
-    function applyGravity() {
-      for (let col = 0; col < width; col++) {
-        for (let row = width - 2; row >= 0; row--) {
-          let idx = row * width + col;
-          if (candies[idx].classList.length === 1) continue; // empty candy
-
-          let currentRow = row;
-          while (currentRow + 1 < width && candies[(currentRow + 1) * width + col].classList.length === 1) {
-            // Swap candy down
-            swapCandies(currentRow * width + col, (currentRow + 1) * width + col);
-            currentRow++;
-          }
-        }
+    window.gameStorage[key] = value;
+    return false;
+  }
+  
+  function getFromStorage(key) {
+    try {
+      // Try localStorage first
+      if (typeof Storage !== 'undefined' && localStorage) {
+        return localStorage.getItem(key);
       }
-
-      // Fill empty top candies with new random candies
-      for (let i = 0; i < width; i++) {
-        if (candies[i].classList.length === 1) {
-          const color = randomColor();
-          candies[i].className = `candy ${color}`;
-          candies[i].style.backgroundImage = `url('${imageMap[color]}')`;
-        }
+    } catch (e) {
+      console.log('localStorage not available, using memory storage');
+    }
+    
+    // Fallback to in-memory storage
+    if (window.gameStorage && window.gameStorage[key]) {
+      return window.gameStorage[key];
+    }
+    return null;
+  }
+  
+  function loadScore() {
+    const savedScore = getFromStorage(SCORE_KEY);
+    const savedTimestamp = getFromStorage(SCORE_TIMESTAMP_KEY);
+    const currentTime = Date.now();
+    
+    // Check if score has expired (24 hours)
+    if (savedScore && savedTimestamp) {
+      const hoursElapsed = (currentTime - parseInt(savedTimestamp)) / (1000 * 60 * 60);
+      if (hoursElapsed < SCORE_EXPIRY_HOURS) {
+        return parseInt(savedScore) || 0;
       }
     }
-
-    // Update score and localStorage
-    function updateScore(points) {
-      score += points;
-      updateScoreDisplay();
-      localStorage.setItem('score', score);
-      console.log('Score updated:', score);
+    
+    // Score expired or doesn't exist, reset
+    saveScore(0);
+    return 0;
+  }
+  
+  function saveScore(newScore) {
+    saveToStorage(SCORE_KEY, newScore.toString());
+    saveToStorage(SCORE_TIMESTAMP_KEY, Date.now().toString());
+    
+    // Update high score if needed
+    const currentHighScore = getHighScore();
+    if (newScore > currentHighScore) {
+      saveToStorage(HIGH_SCORE_KEY, newScore.toString());
+      showHighScoreFeedback(newScore);
     }
+  }
+  
+  function getHighScore() {
+    const highScore = getFromStorage(HIGH_SCORE_KEY);
+    return parseInt(highScore) || 0;
+  }
 
-    function updateScoreDisplay() {
-      scoreDisplay.textContent = `Score: ${score}`;
-    }
-
-    resetBtn.addEventListener('click', () => {
-      score = 0;
-      updateScoreDisplay();
-      localStorage.setItem('score', score);
-      console.log('Score reset');
+  function addDragEvents() {
+    candies.forEach(candy => {
+      candy.addEventListener('dragstart', dragStart);
+      candy.addEventListener('dragover', e => e.preventDefault());
+      candy.addEventListener('drop', dragDrop);
+      candy.addEventListener('dragend', dragEnd);
     });
+  }
 
-    // Game loop: keep checking matches and applying gravity every 300ms
-    function gameLoop() {
-      if (checkMatches()) {
-        applyGravity();
-      }
+  function dragStart(e) {
+    if (isProcessing) return;
+    draggedId = parseInt(e.target.getAttribute('data-id'));
+  }
+
+  function dragDrop(e) {
+    if (isProcessing) return;
+    replacedId = parseInt(e.target.getAttribute('data-id'));
+  }
+
+  async function dragEnd() {
+    if (isProcessing || replacedId === null || draggedId === null) {
+      resetDrag();
+      return;
     }
 
-    createBoard();
+    if (isAdjacent(draggedId, replacedId)) {
+      swapCandies(draggedId, replacedId);
+      
+      if (hasMatches()) {
+        isProcessing = true;
+        await processMatches();
+        isProcessing = false;
+      } else {
+        // Invalid move - swap back
+        swapCandies(draggedId, replacedId);
+      }
+    }
+    
+    resetDrag();
+  }
 
-    // Run the game loop every 300ms
-    setInterval(gameLoop, 300);
-  </script>
+  function resetDrag() {
+    draggedId = null;
+    replacedId = null;
+  }
+
+  function isAdjacent(id1, id2) {
+    const row1 = Math.floor(id1 / width);
+    const col1 = id1 % width;
+    const row2 = Math.floor(id2 / width);
+    const col2 = id2 % width;
+    
+    const rowDiff = Math.abs(row1 - row2);
+    const colDiff = Math.abs(col1 - col2);
+    
+    return (rowDiff === 1 && colDiff === 0) || (rowDiff === 0 && colDiff === 1);
+  }
+
+  function swapCandies(id1, id2) {
+    const candy1 = candies[id1];
+    const candy2 = candies[id2];
+    
+    const tempClass = candy1.className;
+    const tempImage = candy1.style.backgroundImage;
+    
+    candy1.className = candy2.className;
+    candy1.style.backgroundImage = candy2.style.backgroundImage;
+    
+    candy2.className = tempClass;
+    candy2.style.backgroundImage = tempImage;
+  }
+
+  function hasMatches() {
+    return findMatches().length > 0;
+  }
+
+  function findMatches() {
+    let matches = [];
+    
+    // Check horizontal matches
+    for (let row = 0; row < width; row++) {
+      let count = 1;
+      let currentFood = getFoodType(row * width);
+      
+      for (let col = 1; col < width; col++) {
+        const index = row * width + col;
+        const food = getFoodType(index);
+        
+        if (food === currentFood) {
+          count++;
+        } else {
+          if (count >= 3) {
+            for (let i = col - count; i < col; i++) {
+              matches.push(row * width + i);
+            }
+          }
+          count = 1;
+          currentFood = food;
+        }
+      }
+      
+      if (count >= 3) {
+        for (let i = width - count; i < width; i++) {
+          matches.push(row * width + i);
+        }
+      }
+    }
+    
+    // Check vertical matches
+    for (let col = 0; col < width; col++) {
+      let count = 1;
+      let currentFood = getFoodType(col);
+      
+      for (let row = 1; row < width; row++) {
+        const index = row * width + col;
+        const food = getFoodType(index);
+        
+        if (food === currentFood) {
+          count++;
+        } else {
+          if (count >= 3) {
+            for (let i = row - count; i < row; i++) {
+              matches.push(i * width + col);
+            }
+          }
+          count = 1;
+          currentFood = food;
+        }
+      }
+      
+      if (count >= 3) {
+        for (let i = width - count; i < width; i++) {
+          matches.push(i * width + col);
+        }
+      }
+    }
+    
+    return [...new Set(matches)]; // Remove duplicates
+  }
+
+  function getFoodType(index) {
+    const classes = candies[index].className.split(' ');
+    return classes.find(cls => foods.includes(cls));
+  }
+
+  async function processMatches() {
+    let totalMatches = 0;
+    
+    while (hasMatches()) {
+      const matches = findMatches();
+      totalMatches += matches.length;
+      
+      // Animate removal
+      matches.forEach(index => {
+        candies[index].classList.add('popping');
+      });
+      
+      await new Promise(resolve => setTimeout(resolve, 400));
+      
+      // Remove matches
+      matches.forEach(index => {
+        candies[index].className = 'candy';
+        candies[index].style.backgroundImage = '';
+      });
+      
+      // Apply gravity
+      applyGravity();
+      
+      await new Promise(resolve => setTimeout(resolve, 300));
+    }
+    
+    if (totalMatches > 0) {
+      updateScore(totalMatches);
+      showMatchFeedback(totalMatches);
+    }
+  }
+
+  function applyGravity() {
+    for (let col = 0; col < width; col++) {
+      const column = [];
+      
+      // Collect non-empty candies from bottom to top
+      for (let row = width - 1; row >= 0; row--) {
+        const index = row * width + col;
+        const foodType = getFoodType(index);
+        if (foodType) {
+          column.push(foodType);
+        }
+      }
+      
+      // Fill column from bottom up
+      for (let row = width - 1; row >= 0; row--) {
+        const index = row * width + col;
+        if (column.length > 0) {
+          const food = column.shift();
+          candies[index].className = `candy ${food}`;
+          candies[index].style.backgroundImage = `url('${imageMap[food]}')`;
+        } else {
+          const food = getRandomFood();
+          candies[index].className = `candy ${food} falling`;
+          candies[index].style.backgroundImage = `url('${imageMap[food]}')`;
+          // Remove falling class after animation
+          setTimeout(() => {
+            candies[index].classList.remove('falling');
+          }, 300);
+        }
+      }
+    }
+  }
+
+  function updateScore(points) {
+    score += points * 10; // 10 points per match
+    scoreDisplay.textContent = `Score: ${score}`;
+    saveScore(score);
+  }
+  
+  function updateScoreDisplay() {
+    scoreDisplay.textContent = `Score: ${score}`;
+    highScoreDisplay.textContent = `High Score: ${getHighScore()}`;
+  }
+
+  function showMatchFeedback(matches) {
+    const feedback = document.createElement('div');
+    feedback.className = 'match-feedback';
+    feedback.textContent = `+${matches * 10} points!`;
+    document.body.appendChild(feedback);
+    
+    setTimeout(() => {
+      feedback.remove();
+    }, 1000);
+  }
+  
+  function showHighScoreFeedback(newHighScore) {
+    const feedback = document.createElement('div');
+    feedback.className = 'high-score-feedback';
+    feedback.innerHTML = `🎉 NEW HIGH SCORE!<br>${newHighScore} points`;
+    document.body.appendChild(feedback);
+    
+    setTimeout(() => {
+      feedback.remove();
+    }, 2000);
+  }
+
+  function resetGame() {
+    score = 0;
+    updateScoreDisplay();
+    saveScore(0);
+    createBoard();
+  }
+
+  resetBtn.addEventListener('click', resetGame);
+
+  // Initialize the game
+  function initGame() {
+    score = loadScore();
+    updateScoreDisplay();
+    createBoard();
+  }
+
+  // Initialize the game
+  initGame();
+</script>
 </body>
 </html>
